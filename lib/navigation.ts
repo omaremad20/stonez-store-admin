@@ -92,10 +92,10 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
     title: "Products",
     href: "/products",
     icon: Package,
-    description: "Products, variants, sizes, pricing and stock.",
+    description: "Products, variants, sizes, pricing, stock and barcode labels.",
     group: "catalog",
-    status: "placeholder",
-    keywords: ["items", "inventory", "variants", "stock", "sku"],
+    status: "ready",
+    keywords: ["items", "inventory", "variants", "stock", "sku", "barcode", "labels", "print"],
   },
   {
     title: "Users",
