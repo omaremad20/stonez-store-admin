@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getSafeRedirectPath, isPublicPath, LOGIN_PATH } from "@/lib/auth/redirect";
+import { DEFAULT_AUTHENTICATED_PATH, getSafeRedirectPath, isPublicPath, LOGIN_PATH } from "@/lib/auth/redirect";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -57,6 +57,12 @@ export async function updateSession(request: NextRequest) {
   if (isAuthenticated && pathname === LOGIN_PATH) {
     const destination = getSafeRedirectPath(request.nextUrl.searchParams.get("next"));
     return redirectWithSession(new URL(destination, request.url), supabaseResponse);
+  }
+
+  // "/" has no UI of its own: send signed-in users straight to the dashboard
+  // before any rendering happens (signed-out users were sent to /login above).
+  if (pathname === "/") {
+    return redirectWithSession(new URL(DEFAULT_AUTHENTICATED_PATH, request.url), supabaseResponse);
   }
 
   return supabaseResponse;
