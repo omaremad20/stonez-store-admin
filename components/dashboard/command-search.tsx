@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
 import { Autocomplete } from "@base-ui/react/autocomplete";
 import { ArrowRight, CornerDownLeft, type LucideIcon, Search } from "lucide-react";
 
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useGuardedNavigation } from "@/components/dashboard/navigation-guard";
 import { DASHBOARD_ACTIONS, DASHBOARD_NAV } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +63,7 @@ function useIsMac() {
 
 export function CommandSearch() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const { navigate } = useGuardedNavigation();
   const isMac = useIsMac();
   const hintId = useId();
   const { contains } = Autocomplete.useFilter({ sensitivity: "base" });
@@ -82,7 +82,8 @@ export function CommandSearch() {
   function select(item: SearchItem) {
     if (item.disabled) return;
     setOpen(false);
-    router.push(item.href);
+    // Goes through the unsaved-changes guard like any other in-app navigation.
+    navigate(item.href);
   }
 
   return (
