@@ -38,6 +38,13 @@ export async function updateSession(request: NextRequest) {
 
   // Optimistic routing only. Real authorization happens in the Data Access
   // Layer (`lib/auth/dal.ts`) close to the data.
+  if (!isAuthenticated && pathname.startsWith("/api/")) {
+    return NextResponse.json(
+      { error: { code: "unauthenticated", message: "Your session has expired. Sign in again to continue." } },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   if (!isAuthenticated && !isPublicPath(pathname)) {
     const loginUrl = new URL(LOGIN_PATH, request.url);
     const requested = `${pathname}${search}`;
