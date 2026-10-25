@@ -1,3 +1,7 @@
+import { redirect } from "next/navigation";
+
+import { DEFAULT_AUTHENTICATED_PATH } from "@/lib/auth/redirect";
+
 export default function Home() {
-  return <div></div>;
+  redirect(DEFAULT_AUTHENTICATED_PATH);
 }
