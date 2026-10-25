@@ -23,6 +23,11 @@ export const entityKeys = {
   entity: (entity: EntityKey) => ["entities", entity] as const,
   lists: (entity: EntityKey) => ["entities", entity, "list"] as const,
   list: (entity: EntityKey, state: EntityQueryState) => ["entities", entity, "list", state] as const,
+  /**
+   * Plain (non-infinite) option lists, e.g. the department filter. Must never
+   * share a key with `list`, whose cache entry has the InfiniteData shape.
+   */
+  options: (entity: EntityKey) => ["entities", entity, "options"] as const,
 };
 
 /** Related lists that embed this entity's data and must refresh after deletes. */

@@ -202,14 +202,17 @@ function DepartmentFilter({
   // Options come from the shared listing endpoint, so they are capped like any
   // other listing request (the store has a handful of departments).
   const departments = useQuery({
-    queryKey: entityKeys.list("departments", DEFAULT_QUERY_STATE),
+    // Own key (not the Departments page's infinite-list key) so the two cache
+    // shapes never collide; still under "departments" so edits invalidate it.
+    queryKey: entityKeys.options("departments"),
     queryFn: ({ signal }) => fetchEntityPage("departments", DEFAULT_QUERY_STATE, null, signal),
-    select: (page) => ({ items: page.items, truncated: page.nextCursor !== null }),
+    select: (page) => page.items ?? [],
     staleTime: 60_000,
   });
+  const departmentOptions = departments.data ?? [];
 
   const items: Record<string, string> = { [ALL_DEPARTMENTS]: "All departments", none: "No department" };
-  for (const department of departments.data?.items ?? []) items[department.id] = department.name;
+  for (const department of departmentOptions) items[department.id] = department.name;
 
   return (
     <Select
@@ -228,7 +231,7 @@ function DepartmentFilter({
             Loading departments…
           </SelectItem>
         )}
-        {departments.data?.items.map((department) => (
+        {departmentOptions.map((department) => (
           <SelectItem key={department.id} value={department.id}>
             {department.name}
           </SelectItem>
