@@ -1,20 +1,32 @@
-import type { EntityApiErrorCode } from "@/lib/entities/types";
+import type { EntityApiErrorBody, EntityApiErrorCode } from "@/lib/entities/types";
 
 /** Error carried through TanStack Query; `message` is always safe to show. */
 export class EntityRequestError extends Error {
   readonly code: EntityApiErrorCode;
   readonly status: number;
+  readonly fieldErrors: EntityApiErrorBody["error"]["fieldErrors"];
 
-  constructor(code: EntityApiErrorCode, message: string, status = 0) {
+  constructor(
+    code: EntityApiErrorCode,
+    message: string,
+    status = 0,
+    fieldErrors?: EntityApiErrorBody["error"]["fieldErrors"],
+  ) {
     super(message);
     this.name = "EntityRequestError";
     this.code = code;
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 
   /** 4xx-style failures will not succeed on retry. */
   get isPermanent(): boolean {
-    return this.code !== "server_error" && this.code !== "network";
+    return this.code !== "server_error" && this.code !== "network" && this.code !== "timeout";
+  }
+
+  /** The request may have reached the database: its outcome is unknown. */
+  get isUncertain(): boolean {
+    return this.code === "timeout" || this.code === "network";
   }
 }
 
@@ -26,6 +38,9 @@ export const ENTITY_ERROR_MESSAGES: Record<EntityApiErrorCode, string> = {
   conflict: "Someone else changed this list at the same time. Please try again.",
   server_error: "Something went wrong on our side. Please try again.",
   network: "We couldn't reach the server. Check your connection and try again.",
+  validation: "Some values need attention. Check the highlighted fields.",
+  stale: "This record was changed by someone else after you opened it.",
+  timeout: "The server took too long to respond. Your changes may or may not have been saved.",
 };
 
 export function toEntityError(error: unknown): EntityRequestError {

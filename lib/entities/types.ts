@@ -31,10 +31,21 @@ export type EntityApiErrorCode =
   | "not_found"
   | "conflict"
   | "server_error"
-  | "network";
+  | "network"
+  /** Submitted values failed validation (server-side re-check or a DB constraint). */
+  | "validation"
+  /** The record changed after the form loaded it (optimistic concurrency). */
+  | "stale"
+  /** No response in time: the write may or may not have been committed. */
+  | "timeout";
 
 export type EntityApiErrorBody = {
-  error: { code: EntityApiErrorCode; message: string };
+  error: {
+    code: EntityApiErrorCode;
+    message: string;
+    /** Field-level messages, keyed by form field. */
+    fieldErrors?: Partial<Record<"name" | "description" | "departmentId" | "image", string>>;
+  };
 };
 
 export type ReorderPosition = "before" | "after" | "first" | "last";

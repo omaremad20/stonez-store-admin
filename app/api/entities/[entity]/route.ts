@@ -1,18 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ENTITY_CONFIG, isEntityKey } from "@/lib/entities/config";
-import { ENTITY_ERROR_MESSAGES, EntityRequestError } from "@/lib/entities/errors";
+import { ENTITY_CONFIG } from "@/lib/entities/config";
+import { payloadSchemaFor, toFieldErrors } from "@/lib/entities/form-schema";
 import { listEntityPage } from "@/lib/entities/list.server";
+import { createEntity } from "@/lib/entities/mutations.server";
 import { decodeCursor } from "@/lib/entities/postgrest";
 import { parseQueryState } from "@/lib/entities/query-state";
-import type { EntityApiErrorBody, EntityApiErrorCode } from "@/lib/entities/types";
-import { createClient } from "@/lib/supabase/server";
-
-const NO_STORE = { "Cache-Control": "no-store" };
-
-function errorResponse(code: EntityApiErrorCode, status: number, message = ENTITY_ERROR_MESSAGES[code]) {
-  return NextResponse.json<EntityApiErrorBody>({ error: { code, message } }, { status, headers: NO_STORE });
-}
+import {
+  authorizeEntityRequest,
+  errorResponse,
+  NO_STORE,
+  readJson,
+  toErrorResponse,
+} from "@/lib/entities/route-helpers.server";
 
 /**
  * GET /api/entities/:entity?q&status&sort&dir&department&cursor&limit
@@ -22,28 +22,9 @@ function errorResponse(code: EntityApiErrorCode, status: number, message = ENTIT
  * whatever `limit` the client sends.
  */
 export async function GET(request: NextRequest, ctx: RouteContext<"/api/entities/[entity]">) {
-  const { entity } = await ctx.params;
-  if (!isEntityKey(entity)) {
-    return errorResponse("not_found", 404, "Unknown section.");
-  }
-
-  const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims?.sub) {
-    return errorResponse("unauthenticated", 401);
-  }
-
-  // All four tables are admin-only under RLS. Checking up front turns a silent
-  // empty result for employees into an explicit, explainable state.
-  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  if (roleError) return errorResponse("server_error", 500);
-  if (isAdmin !== true) {
-    return errorResponse(
-      "forbidden",
-      403,
-      `Only administrators can manage ${ENTITY_CONFIG[entity].plural.toLowerCase()}.`,
-    );
-  }
+  const auth = await authorizeEntityRequest((await ctx.params).entity);
+  if (!auth.ok) return auth.response;
+  const { entity, supabase } = auth;
 
   const params = request.nextUrl.searchParams;
   const state = parseQueryState(params, ENTITY_CONFIG[entity]);
@@ -61,9 +42,33 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/entities
     const page = await listEntityPage(supabase, entity, state, cursor, limit);
     return NextResponse.json(page, { headers: NO_STORE });
   } catch (error) {
-    if (error instanceof EntityRequestError) {
-      return errorResponse(error.code, error.status || 500, error.message);
-    }
-    return errorResponse("server_error", 500);
+    return toErrorResponse(error);
+  }
+}
+
+/**
+ * POST /api/entities/:entity — create one record.
+ * The body is re-validated with the same schema the form uses; database
+ * constraints and RLS remain authoritative.
+ */
+export async function POST(request: NextRequest, ctx: RouteContext<"/api/entities/[entity]">) {
+  const auth = await authorizeEntityRequest((await ctx.params).entity);
+  if (!auth.ok) return auth.response;
+  const { entity, supabase } = auth;
+
+  const parsed = payloadSchemaFor(entity, "create").safeParse(await readJson(request));
+  if (!parsed.success) {
+    return errorResponse("validation", 422, undefined, toFieldErrors(parsed.error));
+  }
+
+  try {
+    const record = await createEntity(supabase, entity, {
+      ...parsed.data,
+      departmentId: parsed.data.departmentId ?? null,
+      clientId: "clientId" in parsed.data ? parsed.data.clientId : undefined,
+    });
+    return NextResponse.json({ record }, { status: 201, headers: NO_STORE });
+  } catch (error) {
+    return toErrorResponse(error);
   }
 }
