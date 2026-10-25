@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Hammer } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DEFAULT_AUTHENTICATED_PATH } from "@/lib/auth/redirect";
 import { getNavItem } from "@/lib/navigation";
@@ -40,10 +40,10 @@ export function ModulePlaceholder({ href }: { href: string }) {
             {item.title.toLowerCase()} are planned for an upcoming phase.
           </p>
         </div>
-        <Button variant="outline" size="sm" nativeButton={false} render={<Link href={DEFAULT_AUTHENTICATED_PATH} />}>
+        <Link href={DEFAULT_AUTHENTICATED_PATH} className={buttonVariants({ variant: "outline", size: "sm" })}>
           <ArrowLeft aria-hidden />
           Back to overview
-        </Button>
+        </Link>
       </section>
     </div>
   );

@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -35,6 +36,9 @@ function readString(source: Record<string, unknown> | undefined, key: string): s
  * boundary. Memoised per request with React `cache`.
  */
 export const getDashboardUser = cache(async (): Promise<DashboardUser> => {
+  // Session reads are per-request. Opting out of (runtime) prerendering keeps
+  // the Supabase client's clock reads out of Partial Prefetching prerenders.
+  await connection();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims;

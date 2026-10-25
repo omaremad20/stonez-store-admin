@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,9 +22,25 @@ type SidebarNavProps = {
   onNavigate?: () => void;
 };
 
-export function SidebarNav({ onNavigate }: SidebarNavProps) {
-  const pathname = usePathname();
+/**
+ * On dynamic routes (e.g. `/brands/[id]`) the pathname is request data, which
+ * Cache Components requires behind Suspense. The fallback is the same nav
+ * without an active highlight, so the static shell never shifts.
+ */
+export function SidebarNav(props: SidebarNavProps) {
+  return (
+    <Suspense fallback={<NavList {...props} pathname={null} />}>
+      <ActiveSidebarNav {...props} />
+    </Suspense>
+  );
+}
 
+function ActiveSidebarNav(props: SidebarNavProps) {
+  const pathname = usePathname();
+  return <NavList {...props} pathname={pathname} />;
+}
+
+function NavList({ onNavigate, pathname }: SidebarNavProps & { pathname: string | null }) {
   return (
     <nav aria-label="Dashboard" className="grid gap-5">
       {groups.map((group) => {
@@ -37,7 +54,7 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
             )}
             <ul className="grid gap-0.5">
               {group.items.map((item) => {
-                const active = isNavItemActive(pathname, item.href);
+                const active = pathname !== null && isNavItemActive(pathname, item.href);
                 const Icon = item.icon;
                 return (
                   <li key={item.href}>
