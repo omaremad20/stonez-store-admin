@@ -1,13 +1,12 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { EntityCreateLink } from "@/components/dashboard/entities/entity-create-link";
 import { EntityManagementPage } from "@/components/dashboard/entities/entity-management-page";
 import { EntityAccessRequired, EntityTableSkeleton } from "@/components/dashboard/entities/entity-states";
 import { getDashboardUser } from "@/lib/auth/dal";
-import { ENTITY_CONFIG, entityRoutes, type EntityKey } from "@/lib/entities/config";
+import { ENTITY_CONFIG, type EntityKey } from "@/lib/entities/config";
 
 /**
  * Server entry for an entity listing route. The header is part of the static
@@ -23,10 +22,10 @@ export function EntityPage({ entity }: { entity: EntityKey }) {
         title={config.plural}
         description={config.description}
         actions={
-          <Link href={entityRoutes(config).create} className={buttonVariants()}>
+          <EntityCreateLink config={config}>
             <Plus aria-hidden />
             New {config.singular}
-          </Link>
+          </EntityCreateLink>
         }
       />
       <Suspense fallback={<EntityTableSkeleton columns={config.columns.length + 1} />}>

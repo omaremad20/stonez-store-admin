@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { CircleAlert, Loader2, Plus, RotateCcw, SearchX, ShieldAlert } from "lucide-react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
-import { entityRoutes, type EntityConfig } from "@/lib/entities/config";
+import { Button } from "@/components/ui/button";
+import type { EntityConfig } from "@/lib/entities/config";
 import { getNavItem } from "@/lib/navigation";
+import { EntityCreateLink } from "@/components/dashboard/entities/entity-create-link";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------ skeleton */
@@ -130,10 +130,10 @@ export function EntityEmptyState({
       title={`No ${plural} yet`}
       description={`${config.plural} you add will appear here, in the order customers see them.`}
       action={
-        <Link href={entityRoutes(config).create} className={buttonVariants({ size: "sm" })}>
+        <EntityCreateLink config={config} size="sm">
           <Plus aria-hidden />
           New {config.singular}
-        </Link>
+        </EntityCreateLink>
       }
     />
   );

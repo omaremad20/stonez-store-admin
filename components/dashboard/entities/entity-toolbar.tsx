@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, ListFilter, Loader2, RotateCcw, Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,9 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchEntityPage } from "@/lib/entities/client";
 import type { EntityConfig } from "@/lib/entities/config";
-import { entityKeys } from "@/lib/entities/hooks";
+import { useDepartmentOptions } from "@/lib/entities/hooks";
 import {
   DEFAULT_QUERY_STATE,
   SEARCH_MAX_LENGTH,
@@ -201,15 +199,8 @@ function DepartmentFilter({
 }) {
   // Options come from the shared listing endpoint, so they are capped like any
   // other listing request (the store has a handful of departments).
-  const departments = useQuery({
-    // Own key (not the Departments page's infinite-list key) so the two cache
-    // shapes never collide; still under "departments" so edits invalidate it.
-    queryKey: entityKeys.options("departments"),
-    queryFn: ({ signal }) => fetchEntityPage("departments", DEFAULT_QUERY_STATE, null, signal),
-    select: (page) => page.items ?? [],
-    staleTime: 60_000,
-  });
-  const departmentOptions = departments.data ?? [];
+  const departments = useDepartmentOptions();
+  const departmentOptions = departments.data?.items ?? [];
 
   const items: Record<string, string> = { [ALL_DEPARTMENTS]: "All departments", none: "No department" };
   for (const department of departmentOptions) items[department.id] = department.name;

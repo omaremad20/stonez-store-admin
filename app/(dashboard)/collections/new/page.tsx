@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 
-import { EntityRecordPlaceholder } from "@/components/dashboard/entities/entity-record-placeholder";
+import { EntityFormPage } from "@/components/dashboard/entities/entity-form-page";
 
-export const metadata: Metadata = { title: "New Collection" };
+export const metadata: Metadata = { title: "Create Collection" };
 
-// Placeholder — replaced when the create form ships.
 export default function Page({ searchParams }: PageProps<"/collections/new">) {
-  return <EntityRecordPlaceholder entity="collections" kind="create" searchParams={searchParams} />;
+  return <EntityFormPage entity="collections" kind="create" searchParams={searchParams} />;
 }

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 
-import { EntityRecordPlaceholder } from "@/components/dashboard/entities/entity-record-placeholder";
+import { EntityFormPage } from "@/components/dashboard/entities/entity-form-page";
 
-export const metadata: Metadata = { title: "New Category" };
+export const metadata: Metadata = { title: "Create Category" };
 
-// Placeholder — replaced when the create form ships.
 export default function Page({ searchParams }: PageProps<"/categories/new">) {
-  return <EntityRecordPlaceholder entity="categories" kind="create" searchParams={searchParams} />;
+  return <EntityFormPage entity="categories" kind="create" searchParams={searchParams} />;
 }

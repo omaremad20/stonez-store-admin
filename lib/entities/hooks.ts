@@ -6,6 +6,8 @@ import {
   useMutation,
   useQueryClient,
   type InfiniteData,
+  useQuery,
+  type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,7 +15,7 @@ import { toast } from "sonner";
 import { ENTITY_CONFIG, type EntityKey } from "@/lib/entities/config";
 import { deleteEntity, fetchEntityPage, reorderEntity, setEntityVisibility } from "@/lib/entities/client";
 import { EntityRequestError, toEntityError } from "@/lib/entities/errors";
-import type { EntityQueryState } from "@/lib/entities/query-state";
+import { DEFAULT_QUERY_STATE, type EntityQueryState } from "@/lib/entities/query-state";
 import type { EntityListItem, EntityListPage, ReorderInput } from "@/lib/entities/types";
 
 type ListData = InfiniteData<EntityListPage, string | null>;
@@ -28,12 +30,36 @@ export const entityKeys = {
    * share a key with `list`, whose cache entry has the InfiniteData shape.
    */
   options: (entity: EntityKey) => ["entities", entity, "options"] as const,
+  record: (entity: EntityKey, id: string) => ["entities", entity, "record", id] as const,
 };
 
 /** Related lists that embed this entity's data and must refresh after deletes. */
 const DEPENDENT_LISTS: Partial<Record<EntityKey, EntityKey[]>> = {
   departments: ["categories"],
 };
+
+/**
+ * Marks every cached query of an entity stale (lists, options, records) plus
+ * lists that embed its data. Active queries refetch; listings keep their URL
+ * state because the state lives in the query key, not in the cache.
+ */
+export function invalidateEntityQueries(queryClient: QueryClient, entity: EntityKey) {
+  void queryClient.invalidateQueries({ queryKey: entityKeys.entity(entity) });
+  for (const related of DEPENDENT_LISTS[entity] ?? []) {
+    void queryClient.invalidateQueries({ queryKey: entityKeys.entity(related) });
+  }
+}
+
+/** Department options (shared by the categories filter and the category form). */
+export function useDepartmentOptions() {
+  return useQuery({
+    queryKey: entityKeys.options("departments"),
+    // The shared listing endpoint caps this at 24 rows like any listing request.
+    queryFn: ({ signal }) => fetchEntityPage("departments", DEFAULT_QUERY_STATE, null, signal),
+    select: (page) => ({ items: page.items ?? [], truncated: page.nextCursor !== null }),
+    staleTime: 60_000,
+  });
+}
 
 /* ---------------------------------------------------------------- query */
 
@@ -115,12 +141,7 @@ export function useEntityMutations(entity: EntityKey) {
   const config = ENTITY_CONFIG[entity];
   const singular = config.singular.toLowerCase();
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: entityKeys.entity(entity) });
-    for (const related of DEPENDENT_LISTS[entity] ?? []) {
-      void queryClient.invalidateQueries({ queryKey: entityKeys.entity(related) });
-    }
-  };
+  const invalidate = () => invalidateEntityQueries(queryClient, entity);
 
   const visibility = useMutation({
     mutationFn: ({ id, isActive }: { id: string; name: string; isActive: boolean }) =>

@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { EntityAccessRequired } from "@/components/dashboard/entities/entity-states";
 import { getDashboardUser } from "@/lib/auth/dal";
-import { ENTITY_CONFIG, type EntityConfig, type EntityKey } from "@/lib/entities/config";
+import { ENTITY_CONFIG, safeListUrl, type EntityConfig, type EntityKey } from "@/lib/entities/config";
 import { createClient } from "@/lib/supabase/server";
 
 type Kind = "create" | "detail" | "edit";
@@ -47,24 +47,12 @@ export function EntityRecordPlaceholder(props: Props) {
   );
 }
 
-/** Only accept a return URL that points back to this entity's own listing. */
-function safeReturnUrl(config: EntityConfig, raw: string | string[] | undefined): string {
-  if (typeof raw !== "string" || raw.length > 512) return config.href;
-  try {
-    const url = new URL(raw, "http://stonez.local");
-    if (url.origin !== "http://stonez.local" || url.pathname !== config.href) return config.href;
-    return `${url.pathname}${url.search}`;
-  } catch {
-    return config.href;
-  }
-}
-
 async function PlaceholderBody({ entity, kind, params, searchParams }: Props) {
   const config = ENTITY_CONFIG[entity];
   const user = await getDashboardUser();
   if (user.role !== "admin") return <EntityAccessRequired config={config} />;
 
-  const backHref = safeReturnUrl(config, (await searchParams).from);
+  const backHref = safeListUrl(config, (await searchParams).from);
 
   let title = `New ${config.singular}`;
   if (kind !== "create") {

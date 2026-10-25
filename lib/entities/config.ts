@@ -110,3 +110,18 @@ export function entityRoutes(config: EntityConfig) {
     edit: (id: string) => `${config.href}/${id}/edit`,
   };
 }
+
+/**
+ * Validates a `?from=` return URL: only this entity's own listing path (with
+ * its query state) is accepted, so the param can't redirect anywhere else.
+ */
+export function safeListUrl(config: EntityConfig, raw: string | string[] | undefined | null): string {
+  if (typeof raw !== "string" || raw.length > 512) return config.href;
+  try {
+    const url = new URL(raw, "http://stonez.local");
+    if (url.origin !== "http://stonez.local" || url.pathname !== config.href) return config.href;
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return config.href;
+  }
+}

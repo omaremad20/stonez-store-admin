@@ -178,7 +178,7 @@ function createAction(title: string, href: string): DashboardAction {
     title,
     href: `${href}/new`,
     icon: Plus,
-    availability: "planned",
+    availability: "available",
     keywords: ["new", "add", "create", ...(navItem(href).keywords ?? [])],
   };
 }
