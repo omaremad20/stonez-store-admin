@@ -24,7 +24,7 @@ import {
   SORT_LABELS,
   STATUS_FILTERS,
   type EntityQueryState,
-  type SortKey,
+  type SortDirection,
   type StatusFilter,
 } from "@/lib/entities/query-state";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ export function EntityToolbar({ config, state, onChange, onReset, isUpdating }: 
         {config.departmentScope && (
           <DepartmentFilter value={state.department} onChange={(department) => onChange({ department })} />
         )}
-        <SortControl state={state} onChange={onChange} />
+        <SortControl sort={state.sort} dir={state.dir} keys={SORT_KEYS} labels={SORT_LABELS} onChange={onChange} />
         {!isDefault && (
           <Button variant="ghost" size="sm" onClick={onReset} className="text-muted-foreground">
             <RotateCcw aria-hidden />
@@ -77,7 +77,7 @@ export function EntityToolbar({ config, state, onChange, onReset, isUpdating }: 
 
 /* --------------------------------------------------------------- search */
 
-function SearchField({
+export function SearchField({
   label,
   placeholder,
   value,
@@ -162,7 +162,7 @@ function SearchField({
 
 /* --------------------------------------------------------------- status */
 
-function StatusFilterControl({ value, onChange }: { value: StatusFilter; onChange: (value: StatusFilter) => void }) {
+export function StatusFilterControl({ value, onChange }: { value: StatusFilter; onChange: (value: StatusFilter) => void }) {
   return (
     <div role="group" aria-label="Filter by visibility" className="inline-flex h-9 border border-border">
       {STATUS_FILTERS.map((status) => {
@@ -235,39 +235,52 @@ function DepartmentFilter({
 
 /* ----------------------------------------------------------------- sort */
 
-function SortControl({ state, onChange }: { state: EntityQueryState; onChange: (patch: Partial<EntityQueryState>) => void }) {
-  const DirectionIcon = state.dir === "asc" ? ArrowUpNarrowWide : ArrowDownWideNarrow;
+/** Sort dropdown + direction toggle, shared by every keyset listing. */
+export function SortControl<K extends string>({
+  sort,
+  dir,
+  keys,
+  labels,
+  onChange,
+}: {
+  sort: K;
+  dir: SortDirection;
+  keys: readonly K[];
+  labels: Record<K, string>;
+  onChange: (patch: { sort?: K; dir?: SortDirection }) => void;
+}) {
+  const DirectionIcon = dir === "asc" ? ArrowUpNarrowWide : ArrowDownWideNarrow;
 
   return (
     <div className="inline-flex h-9 border border-border">
       <DropdownMenu>
         <DropdownMenuTrigger
           className="inline-flex items-center gap-2 px-3 text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset data-popup-open:bg-muted"
-          aria-label={`Sort: ${SORT_LABELS[state.sort]}`}
+          aria-label={`Sort: ${labels[sort]}`}
         >
           <ListFilter className="size-4 text-muted-foreground" aria-hidden />
           <span className="text-muted-foreground">Sort</span>
-          <span className="font-medium">{SORT_LABELS[state.sort]}</span>
+          <span className="font-medium">{labels[sort]}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-52">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={state.sort} onValueChange={(sort: SortKey) => onChange({ sort })}>
-              {SORT_KEYS.map((key) => (
+            <DropdownMenuRadioGroup value={sort} onValueChange={(next: K) => onChange({ sort: next })}>
+              {keys.map((key) => (
                 <DropdownMenuRadioItem key={key} value={key}>
-                  {SORT_LABELS[key]}
+                  {labels[key]}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      {state.sort !== "manual" && (
+      {sort !== "manual" && (
         <button
           type="button"
-          onClick={() => onChange({ dir: state.dir === "asc" ? "desc" : "asc" })}
+          onClick={() => onChange({ dir: dir === "asc" ? "desc" : "asc" })}
           className="inline-flex w-9 items-center justify-center border-l border-border text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset"
-          aria-label={state.dir === "asc" ? "Ascending. Switch to descending" : "Descending. Switch to ascending"}
+          aria-label={dir === "asc" ? "Ascending. Switch to descending" : "Descending. Switch to ascending"}
         >
           <DirectionIcon className="size-4" aria-hidden />
         </button>

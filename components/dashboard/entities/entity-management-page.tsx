@@ -177,7 +177,7 @@ export function EntityManagementPage({ entity }: { entity: EntityKey }) {
 
 /* ------------------------------------------------------------ reorder hint */
 
-function ReorderHint({
+export function ReorderHint({
   enabled,
   reason,
   saving,
@@ -238,7 +238,7 @@ function ReorderHint({
 
 /* --------------------------------------------------------- infinite footer */
 
-function InfiniteFooter({
+export function InfiniteFooter({
   plural,
   count,
   hasNextPage,

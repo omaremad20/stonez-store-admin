@@ -52,14 +52,14 @@ const cursorSchema = z.object({
   id: z.uuid(),
 });
 
-function toBase64Url(input: string): string {
+export function toBase64Url(input: string): string {
   const bytes = new TextEncoder().encode(input);
   let binary = "";
   bytes.forEach((byte) => (binary += String.fromCharCode(byte)));
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function fromBase64Url(input: string): string {
+export function fromBase64Url(input: string): string {
   const padded = input.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(input.length / 4) * 4, "=");
   const binary = atob(padded);
   return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0)));

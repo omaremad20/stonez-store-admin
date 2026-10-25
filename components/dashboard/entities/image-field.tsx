@@ -21,6 +21,8 @@ type Props = {
   onReject: (message: string) => void;
   disabled?: boolean;
   label: string;
+  /** Small square tile (e.g. one per variant row) instead of the 4:3 panel. */
+  compact?: boolean;
 };
 
 function rejectionMessage(rejections: FileRejection[]) {
@@ -35,7 +37,7 @@ function rejectionMessage(rejections: FileRejection[]) {
  * Optional image. Nothing is uploaded here: the file is held in form state and
  * uploaded on save, so cancelling never leaves orphaned files in Storage.
  */
-export function ImageField({ control, value, onChange, onReject, disabled, label }: Props) {
+export function ImageField({ control, value, onChange, onReject, disabled, label, compact = false }: Props) {
   const previewUrl = value.kind === "new" ? value.previewUrl : value.kind === "existing" ? value.url : null;
   const [broken, setBroken] = useState<string | null>(null);
 
@@ -64,6 +66,63 @@ export function ImageField({ control, value, onChange, onReject, disabled, label
   });
 
   const { id, ...aria } = control;
+
+  if (compact) {
+    const isBroken = previewUrl !== null && broken === previewUrl;
+    return (
+      <div className="flex items-center gap-2">
+        <div
+          {...getRootProps({
+            className: cn(
+              "relative flex size-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden border bg-muted/30 outline-none transition-colors hover:border-foreground/30 focus-visible:ring-2 focus-visible:ring-ring/40",
+              previewUrl ? "border-border" : "border-dashed border-border",
+              isDragActive && "border-foreground/50 bg-muted/60",
+              disabled && "pointer-events-none opacity-50",
+            ),
+            role: "button",
+            tabIndex: disabled ? -1 : 0,
+            // Without an image the dropzone opens the picker itself; with one,
+            // its click/keyboard handling is off (noClick), so the tile replaces.
+            ...(previewUrl
+              ? {
+                  onClick: open,
+                  onKeyDown: (event: React.KeyboardEvent) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      open();
+                    }
+                  },
+                }
+              : {}),
+            "aria-label": previewUrl ? `${label}: replace image` : `${label}: choose an image`,
+            "aria-describedby": aria["aria-describedby"],
+          })}
+        >
+          <input {...getInputProps()} id={id} />
+          {previewUrl && !isBroken ? (
+            // eslint-disable-next-line @next/next/no-img-element -- local blob/object-storage preview
+            <img src={previewUrl} alt="" className="size-full object-cover" onError={() => setBroken(previewUrl)} />
+          ) : (
+            <ImagePlus className="size-4 text-muted-foreground" aria-hidden />
+          )}
+          {value.kind === "new" && <span className="absolute inset-x-0 bottom-0 bg-background/90 text-center text-[0.5rem] font-medium uppercase">New</span>}
+        </div>
+        {previewUrl && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => change({ kind: "none" })}
+            disabled={disabled}
+            aria-label={`${label}: remove image`}
+          >
+            <Trash2 aria-hidden />
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   if (previewUrl) {
     const isBroken = broken === previewUrl;

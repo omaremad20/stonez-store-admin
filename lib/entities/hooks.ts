@@ -102,8 +102,15 @@ function mapItems(data: ListData | undefined, fn: (items: EntityListItem[]) => E
   return { ...data, pages: data.pages.map((page) => ({ ...page, items: fn(page.items) })) };
 }
 
-/** Moves a row within the loaded chunks, keeping each chunk's size intact. */
-export function moveLoadedItem(data: ListData, id: string, toIndex: number | "end-or-remove"): ListData {
+/**
+ * Moves a row within the loaded chunks, keeping each chunk's size intact.
+ * Generic over the page shape so other keyset listings (products) reuse it.
+ */
+export function moveLoadedItem<Data extends InfiniteData<{ items: { id: string }[]; nextCursor: string | null }, string | null>>(
+  data: Data,
+  id: string,
+  toIndex: number | "end-or-remove",
+): Data {
   const flat = data.pages.flatMap((page) => page.items);
   const from = flat.findIndex((item) => item.id === id);
   if (from === -1) return data;
@@ -125,7 +132,8 @@ export function moveLoadedItem(data: ListData, id: string, toIndex: number | "en
     offset += size;
     return { ...page, items };
   });
-  return { ...data, pages };
+  // Same item objects, only redistributed across pages — the shape is unchanged.
+  return { ...data, pages } as Data;
 }
 
 /* ------------------------------------------------------------- mutations */

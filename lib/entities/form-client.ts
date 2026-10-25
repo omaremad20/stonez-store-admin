@@ -147,11 +147,19 @@ export async function prepareImage(file: File): Promise<{ blob: Blob; extension:
 }
 
 /** Uploads to the entity's bucket under a fresh, collision-free key. */
-export async function uploadEntityImage(entity: EntityKey, file: File): Promise<string> {
+export function uploadEntityImage(entity: EntityKey, file: File): Promise<string> {
+  return uploadImageToBucket(ENTITY_FORM_RULES[entity].bucket, file);
+}
+
+/**
+ * Prepares (see `prepareImage`) and uploads an image to any public image
+ * bucket with the same 1 MiB / png-webp-jpeg limits, under `<uuid>.<ext>`.
+ */
+export async function uploadImageToBucket(bucket: string, file: File): Promise<string> {
   const { blob, extension } = await prepareImage(file);
   const path = `${crypto.randomUUID()}.${extension}`;
   const { error } = await createClient()
-    .storage.from(ENTITY_FORM_RULES[entity].bucket)
+    .storage.from(bucket)
     .upload(path, blob, { contentType: blob.type || `image/${extension === "jpg" ? "jpeg" : extension}`, upsert: false, cacheControl: "31536000" });
   if (error) {
     const status = Number((error as { statusCode?: string | number }).statusCode ?? 0);
@@ -167,9 +175,14 @@ export async function uploadEntityImage(entity: EntityKey, file: File): Promise<
 }
 
 /** Best effort: removes an upload that ended up unused (failed or cancelled save). */
-export async function discardUploadedImage(entity: EntityKey, path: string) {
+export function discardUploadedImage(entity: EntityKey, path: string) {
+  return discardImageFromBucket(ENTITY_FORM_RULES[entity].bucket, path);
+}
+
+/** Best effort removal of an unused upload from any image bucket. */
+export async function discardImageFromBucket(bucket: string, path: string) {
   try {
-    await createClient().storage.from(ENTITY_FORM_RULES[entity].bucket).remove([path]);
+    await createClient().storage.from(bucket).remove([path]);
   } catch {
     // An orphaned object is harmless; never block the form on cleanup.
   }

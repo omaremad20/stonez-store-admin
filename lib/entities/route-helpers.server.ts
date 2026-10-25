@@ -32,18 +32,13 @@ export function toErrorResponse(error: unknown) {
 }
 
 /**
- * Shared guard for every entity Route Handler: known entity, verified session
- * (getClaims validates the JWT) and the admin role required by RLS on all four
- * tables. The returned client is the caller's session client, so RLS and
- * the audit triggers still see the real user.
+ * Verified session (getClaims validates the JWT) plus the admin role required
+ * by RLS on the catalog tables. The returned client is the caller's session
+ * client, so RLS and the audit triggers still see the real user.
  */
-export async function authorizeEntityRequest(
-  rawEntity: string,
-): Promise<{ ok: true; entity: EntityKey; supabase: ServerSupabase } | { ok: false; response: NextResponse }> {
-  if (!isEntityKey(rawEntity)) {
-    return { ok: false, response: errorResponse("not_found", 404, "Unknown section.") };
-  }
-
+export async function authorizeAdminRequest(
+  sectionPlural: string,
+): Promise<{ ok: true; supabase: ServerSupabase } | { ok: false; response: NextResponse }> {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims?.sub) {
@@ -55,11 +50,24 @@ export async function authorizeEntityRequest(
   if (isAdmin !== true) {
     return {
       ok: false,
-      response: errorResponse("forbidden", 403, `Only administrators can manage ${ENTITY_CONFIG[rawEntity].plural.toLowerCase()}.`),
+      response: errorResponse("forbidden", 403, `Only administrators can manage ${sectionPlural.toLowerCase()}.`),
     };
   }
 
-  return { ok: true, entity: rawEntity, supabase };
+  return { ok: true, supabase };
+}
+
+/** Shared guard for every entity Route Handler: known entity + `authorizeAdminRequest`. */
+export async function authorizeEntityRequest(
+  rawEntity: string,
+): Promise<{ ok: true; entity: EntityKey; supabase: ServerSupabase } | { ok: false; response: NextResponse }> {
+  if (!isEntityKey(rawEntity)) {
+    return { ok: false, response: errorResponse("not_found", 404, "Unknown section.") };
+  }
+
+  const auth = await authorizeAdminRequest(ENTITY_CONFIG[rawEntity].plural);
+  if (!auth.ok) return auth;
+  return { ok: true, entity: rawEntity, supabase: auth.supabase };
 }
 
 /** Parses a JSON body without throwing on malformed input. */

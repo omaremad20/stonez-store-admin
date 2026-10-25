@@ -61,7 +61,7 @@ function subscribeReducedMotion(callback: () => void) {
   return () => query.removeEventListener("change", callback);
 }
 
-function usePrefersReducedMotion() {
+export function usePrefersReducedMotion() {
   return useSyncExternalStore(
     subscribeReducedMotion,
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -69,7 +69,7 @@ function usePrefersReducedMotion() {
   );
 }
 
-const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+export const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 
 /* ---------------------------------------------------------------- table */
 
