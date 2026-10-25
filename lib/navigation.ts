@@ -58,7 +58,7 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
     icon: Layers,
     description: "Top-level store sections such as men's, women's and kids' wear.",
     group: "catalog",
-    status: "placeholder",
+    status: "ready",
     keywords: ["men", "women", "kids", "sections"],
   },
   {
@@ -67,7 +67,7 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
     icon: Tag,
     description: "Brands carried by the store and their logos.",
     group: "catalog",
-    status: "placeholder",
+    status: "ready",
     keywords: ["labels", "manufacturers"],
   },
   {
@@ -76,7 +76,7 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
     icon: FolderTree,
     description: "Product categories used to organise the catalog.",
     group: "catalog",
-    status: "placeholder",
+    status: "ready",
     keywords: ["taxonomy", "types"],
   },
   {
@@ -85,7 +85,7 @@ export const DASHBOARD_NAV: readonly NavItem[] = [
     icon: Shapes,
     description: "Curated and seasonal groupings of products.",
     group: "catalog",
-    status: "placeholder",
+    status: "ready",
     keywords: ["season", "drops", "curated"],
   },
   {

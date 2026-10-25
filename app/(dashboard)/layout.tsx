@@ -1,5 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 /**
  * Dashboard shell. Kept as a Server Component with a static shell: the only
@@ -12,7 +13,9 @@ export default function DashboardLayout({ children }: LayoutProps<"/">) {
       <Sidebar />
       <DashboardHeader />
       <main id="main-content" className="flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
-        <div className="mx-auto w-full max-w-7xl">{children}</div>
+        <div className="mx-auto w-full max-w-7xl">
+          <QueryProvider>{children}</QueryProvider>
+        </div>
       </main>
     </div>
   );

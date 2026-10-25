@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 
-import { ModulePlaceholder } from "@/components/dashboard/module-placeholder";
+import { EntityPage } from "@/components/dashboard/entities/entity-page";
 
 export const metadata: Metadata = { title: "Brands" };
 
-// Placeholder — replaced when the Brands module is built.
 export default function Page() {
-  return <ModulePlaceholder href="/brands" />;
+  return <EntityPage entity="brands" />;
 }
